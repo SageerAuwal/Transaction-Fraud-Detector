@@ -699,3 +699,21 @@ input:checked + .slider:before {
     margin-top: 0.5rem;
     min-height: 1.2rem;
 }
+
+/* ── Login Logo Styling ── */
+.login-logo {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent);
+    padding: 8px;
+    background: var(--bg-elevated);
+    box-shadow: 0 0 20px var(--accent-glow);
+    margin: 0 auto 1rem auto;
+    display: block;
+    transition: transform 0.3s var(--ease);
+}
+.login-logo:hover {
+    transform: scale(1.05);
+}

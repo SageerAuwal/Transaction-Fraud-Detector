@@ -1,0 +1,23 @@
+{
+  "version": "20260502_113511",
+  "trained_at": "2026-05-02T11:35:11.024875",
+  "train_rows": 40000,
+  "test_rows": 10000,
+  "pr_auc": 1.0,
+  "optimal_threshold": 0.0954,
+  "f2_score": 0.9992,
+  "features": [
+    "amount_ngn",
+    "hour",
+    "day_of_week",
+    "is_late_night",
+    "bvn_match",
+    "txn_count_1h",
+    "txn_count_24h",
+    "amt_sum_24h",
+    "user_id (target-encoded)",
+    "sender_bank (OHE)",
+    "receiver_bank (OHE)",
+    "channel (OHE)"
+  ]
+}

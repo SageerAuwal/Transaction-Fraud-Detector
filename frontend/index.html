@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gojo Sentinel — AI-Powered Fraud Detection</title>
+    <meta name="description" content="Gojo Sentinel real-time fraud detection for Nigerian transactions — NIP, POS, USSD, and Web channels.">
+    <link rel="icon" type="image/png" href="logo_final.png">
+    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="chart.js"></script>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-grid"></div>
+
+    <div class="app-layout hidden" id="appLayout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="logo_final.png" alt="Gojo Sentinel" class="logo-img">
+                </div>
+            </div>
+
+            <div class="sidebar-nav">
+                <a href="#" class="nav-item active" id="nav-dashboard" data-page="dashboard">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                    Dashboard
+                </a>
+                <a href="#" class="nav-item" id="nav-transactions" data-page="transactions">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                    Transactions
+                </a>
+                <a href="#" class="nav-item" id="nav-rules" data-page="rules">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                    Rules
+                </a>
+                <a href="#" class="nav-item hidden" id="nav-users" data-page="users">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    Users
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding: 0 0.5rem;">
+                    <div class="status-dot" id="apiStatus" title="API Status" style="margin-bottom: 0;">
+                        <span class="dot"></span>
+                        <span class="status-label">Connecting...</span>
+                    </div>
+                    <label class="theme-switch" title="Toggle API Control" style="transform: scale(0.85); transform-origin: right;">
+                        <input type="checkbox" id="apiToggleCheckbox" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                
+                
+                <div class="auth-section">
+                    <div id="loginWrapper">
+                        <button id="openLoginBtn" class="btn btn-primary w-full">Admin Login</button>
+                    </div>
+                    <div id="profileCard" class="user-card hidden">
+                        <div class="user-info">
+                            <span id="profileName" class="user-name">Admin</span>
+                            <span id="profileRole" class="user-role">Role: admin</span>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm w-full" id="logoutBtn">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content">
+            <header class="page-header">
+                <div class="header-text" style="display: flex; align-items: center; gap: 1rem;">
+                    <button id="sidebarToggle" class="btn-icon" title="Toggle Sidebar" style="background: none; border: none; color: var(--text-primary); cursor: pointer;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+                    </button>
+                    <div>
+                        <h1>Sentinel Dashboard</h1>
+                        <p>AI-powered fraud detection and access control for Nigerian payments.</p>
+                    </div>
+                </div>
+                <div class="header-right" style="display: flex; align-items: center; gap: 1.5rem;">
+
+                    <div class="theme-toggle-wrap" style="display: flex; align-items: center;">
+                        <label class="theme-switch" title="Toggle Light/Dark Mode">
+                            <input type="checkbox" id="themeToggleCheckbox">
+                            <span class="slider round">
+                                <span class="theme-icon-inside">
+                                    <svg class="sun-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                                    <svg class="moon-icon" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                                </span>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="header-stats">
+                        <div class="stat-pill">
+                        <span class="stat-number" id="sessionsScored">0</span>
+                        <span class="stat-desc">Scored Today</span>
+                    </div>
+                    <div class="stat-pill warning">
+                        <span class="stat-number" id="fraudCaught">0</span>
+                        <span class="stat-desc">Fraud Caught</span>
+                    </div>
+                </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Page -->
+            <section id="page-dashboard" class="page-section">
+                <div class="dashboard-grid">
+                    <!-- ── Input Form ── -->
+                    <div class="glass-panel input-section">
+                        <h2 class="panel-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M1.946 9.315c-.522-.174-.527-.455.01-.634l19.087-6.362c.529-.176.832.12.684.638l-5.454 19.086c-.15.529-.455.547-.679.045L12 14l6-8-8 6-8.054-2.685z"/>
+                            </svg>
+                            Simulate Transaction
+                        </h2>
+
+                        <form id="transactionForm" autocomplete="off">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="transaction_id">Transaction ID</label>
+                                    <input type="text" id="transaction_id" placeholder="TXN00000001" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="timestamp">Timestamp</label>
+                                    <input type="datetime-local" id="timestamp" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="user_id">User ID</label>
+                                    <input type="text" id="user_id" value="U00001" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bvn_match">BVN Name Match</label>
+                                    <select id="bvn_match" required>
+                                        <option value="1">Verified Match</option>
+                                        <option value="0">Unverified Mismatch</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group full-width">
+                                    <label for="amount_ngn">Amount (₦ NGN)</label>
+                                    <div class="input-with-prefix">
+                                        <span class="prefix">₦</span>
+                                        <input type="number" step="0.01" id="amount_ngn" value="25000.00" min="100" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="sender_bank">Sender Bank</label>
+                                    <select id="sender_bank" required>
+                                        <option value="GTBank">GTBank</option>
+                                        <option value="Zenith Bank">Zenith Bank</option>
+                                        <option value="Access Bank">Access Bank</option>
+                                        <option value="UBA">UBA</option>
+                                        <option value="First Bank">First Bank</option>
+                                        <option value="Opay">Opay</option>
+                                        <option value="Moniepoint">Moniepoint</option>
+                                        <option value="Kuda">Kuda</option>
+                                        <option value="Fidelity Bank">Fidelity Bank</option>
+                                        <option value="Sterling Bank">Sterling Bank</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="receiver_bank">Receiver Bank</label>
+                                    <select id="receiver_bank" required>
+                                        <option value="GTBank">GTBank</option>
+                                        <option value="Zenith Bank">Zenith Bank</option>
+                                        <option value="Access Bank">Access Bank</option>
+                                        <option value="UBA">UBA</option>
+                                        <option value="First Bank">First Bank</option>
+                                        <option value="Opay" selected>Opay</option>
+                                        <option value="Moniepoint">Moniepoint</option>
+                                        <option value="Kuda">Kuda</option>
+                                        <option value="Fidelity Bank">Fidelity Bank</option>
+                                        <option value="Sterling Bank">Sterling Bank</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group full-width">
+                                    <label>Payment Channel</label>
+                                    <div class="channel-selector" id="channelSelector">
+                                        <button type="button" class="channel-btn active" data-channel="NIP">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                                            NIP
+                                        </button>
+                                        <button type="button" class="channel-btn" data-channel="POS">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/><rect x="9" y="6" width="6" height="6"/></svg>
+                                            POS
+                                        </button>
+                                        <button type="button" class="channel-btn" data-channel="USSD">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                            USSD
+                                        </button>
+                                        <button type="button" class="channel-btn" data-channel="Web">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                                            Web
+                                        </button>
+                                    </div>
+                                    <input type="hidden" id="channel" value="NIP">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="sender_nuban">Sender NUBAN</label>
+                                    <input type="text" id="sender_nuban" maxlength="10" placeholder="10-digit NUBAN" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="receiver_nuban">Receiver NUBAN</label>
+                                    <input type="text" id="receiver_nuban" maxlength="10" placeholder="10-digit NUBAN" required>
+                                </div>
+                            </div>
+
+                             <div class="simulation-controls">
+                                 <button type="button" id="fillLegitBtn" class="btn btn-secondary btn-sm">Normal Pattern</button>
+                                 <button type="button" id="fillFraudBtn" class="btn btn-ghost btn-sm text-danger">High-Risk Pattern</button>
+                             </div>
+
+                             <button type="submit" class="btn btn-primary w-full mt-3" id="scoreBtn">
+                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                 Score Transaction
+                             </button>
+                        </form>
+                    </div>
+
+                    <!-- ── Result Panel ── -->
+                    <div class="glass-panel result-section">
+                        <h2 class="panel-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M13 21V11h8v10h-8zM3 13V3h8v10H3zm6-2V5H5v6h4zM3 21v-6h8v6H3zm2-2h4v-2H5v2zm10 0h4v-6h-4v6zM13 3h8v6h-8V3zm2 2v2h4V5h-4z"/>
+                            </svg>
+                            Analysis Result
+                        </h2>
+
+                        <!-- Empty State -->
+                        <div id="initialState" class="state-container">
+                            <div class="empty-illustration">
+                                <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <path d="m21 21-4.35-4.35"/>
+                                </svg>
+                                <p>Submit a transaction to<br>view its fraud risk score.</p>
+                            </div>
+                        </div>
+
+                        <!-- Loading State -->
+                        <div id="loadingState" class="state-container hidden">
+                            <div class="loading-anim">
+                                <div class="spinner-ring"></div>
+                            </div>
+                            <p class="loading-text">Analyzing transaction...</p>
+                        </div>
+
+                        <!-- Result State -->
+                        <div id="resultState" class="state-container hidden">
+                            <!-- Premium Circular Risk Score -->
+                            <div class="pro-gauge-wrap">
+                                <svg class="pro-gauge-svg" viewBox="0 0 120 120">
+                                    <circle class="pro-gauge-bg" cx="60" cy="60" r="54" />
+                                    <circle id="proGaugePath" class="pro-gauge-fill" cx="60" cy="60" r="54" />
+                                </svg>
+                                <div class="pro-gauge-content">
+                                    <span id="scoreValue" class="pro-gauge-score">0%</span>
+                                    <span class="pro-gauge-label">RISK</span>
+                                </div>
+                            </div>
+
+                            <div class="verdict-badge" id="verdictBadge">
+                                <span id="verdictIcon" style="display: none;"></span>
+                                <span id="verdictText">Safe Transaction</span>
+                            </div>
+
+                            <div class="details-grid">
+                                <div class="detail-card">
+                                    <span class="dc-label">Decision</span>
+                                    <strong class="dc-value" id="decisionText">—</strong>
+                                </div>
+                                <div class="detail-card">
+                                    <span class="dc-label">Risk Level</span>
+                                    <strong class="dc-value" id="riskLevelText">—</strong>
+                                </div>
+                                <div class="detail-card">
+                                    <span class="dc-label">Transaction ID</span>
+                                    <strong class="dc-value" id="resTxnId">—</strong>
+                                </div>
+                                <div class="detail-card">
+                                    <span class="dc-label">Fraud Probability</span>
+                                    <strong class="dc-value" id="probText">—</strong>
+                                </div>
+                            </div>
+
+                            <div class="risk-factors" id="riskFactors">
+                                <h3>Risk Indicators</h3>
+                                <ul id="riskList"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent History -->
+                <div class="glass-panel">
+                    <div class="history-header">
+                        <h2 class="panel-title" style="margin-bottom:0">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm.5-13H11v6l4.75 2.85.75-1.23-4-2.37V7z"/>
+                            </svg>
+                            30-Day Activity Trend
+                        </h2>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-secondary btn-sm" id="toggleChartBtn">30-Day Activity Trend</button>
+                            <button class="btn-clear" id="clearHistory">Clear Data</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 30-Day Prediction Chart Section (Hidden by default) -->
+                    <div id="predictionSection" class="hidden" style="margin-bottom: 1.5rem; padding: 1.5rem; background: var(--bg-input); border-radius: var(--radius); border: 1px solid var(--border-soft);">
+                        <h3 style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--accent);">Legitimate vs. Fraudulent Activity</h3>
+                        <div class="chart-container" style="position: relative; height:250px;">
+                            <canvas id="riskChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="history-table-wrap">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>Amount (₦)</th>
+                                    <th>Channel</th>
+                                    <th>Receiver Bank</th>
+                                    <th>Risk Score</th>
+                                    <th>Decision</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyBody">
+                                <tr class="empty-row"><td colspan="7">No transactions scored yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Transactions Page -->
+            <section id="page-transactions" class="page-section hidden">
+                <div class="glass-panel">
+                    <div class="history-header">
+                        <h2 class="panel-title">Transaction History</h2>
+                        <button class="btn btn-secondary btn-sm" id="reloadTransactions">Refresh Data</button>
+                    </div>
+                    <div class="panel-note" id="transactionNote">Login to load backend transaction history.</div>
+                    <div class="history-table-wrap">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Txn ID</th>
+                                    <th>Amount</th>
+                                    <th>Channel</th>
+                                    <th>Risk</th>
+                                    <th>Decision</th>
+                                    <th>Scored At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionHistoryBody">
+                                <tr class="empty-row"><td colspan="7">Login to view the stored transaction history.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Rules Page -->
+            <section id="page-rules" class="page-section hidden">
+                <div class="glass-panel">
+                    <div class="history-header">
+                        <h2 class="panel-title">Fraud Rules Engine</h2>
+                        <button class="btn btn-secondary btn-sm" id="reloadRules">Refresh Rules</button>
+                    </div>
+                    <div class="panel-note" id="ruleNote">Login as admin to manage rules.</div>
+                    <div class="rules-grid">
+                        <div class="rules-list-card">
+                            <h3>Active Policies</h3>
+                            <div class="history-table-wrap">
+                                <table class="history-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Type</th>
+                                            <th>Value</th>
+                                            <th>Action</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ruleList">
+                                        <tr class="empty-row"><td colspan="6">No rules available. Login as admin to see rules.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="rules-form-card">
+                            <h3>Deploy New Rule</h3>
+                            <form id="createRuleForm" class="glass-form">
+                                <div class="form-group">
+                                    <label>Rule Name</label>
+                                    <input type="text" id="ruleName" placeholder="High Amount Alert" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Condition Type</label>
+                                    <select id="ruleType" required>
+                                        <option value="amount_threshold">Amount Threshold</option>
+                                        <option value="time_window">Time Window</option>
+                                        <option value="bvn_mismatch">BVN Mismatch</option>
+                                        <option value="channel_risk">Channel Risk</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Condition Value</label>
+                                    <input type="text" id="ruleValue" placeholder="e.g. 500000 or 00:00-04:00" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Enforcement Action</label>
+                                    <select id="ruleAction" required>
+                                        <option value="REVIEW">Flag for Review</option>
+                                        <option value="DECLINE">Decline Transaction</option>
+                                        <option value="BLOCK">Block Account</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Description (Optional)</label>
+                                    <textarea id="ruleDescription" placeholder="Explain the rationale behind this rule"></textarea>
+                                </div>
+                                <div class="switch-row">
+                                    <input type="checkbox" id="ruleEnabled" checked>
+                                    <span>Rule is Enabled</span>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-full mt-3">Deploy Rule</button>
+                                <div class="form-message" id="ruleMessage"></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Users Management Page -->
+            <section id="page-users" class="page-section hidden">
+                <div class="glass-panel">
+                    <div class="history-header">
+                        <h2 class="panel-title">User Management</h2>
+                        <button class="btn btn-secondary btn-sm" id="reloadUsers">Refresh Users</button>
+                    </div>
+                    <div class="panel-note">Control system access for administrators, sub-admins, and staff.</div>
+                    
+                    <div class="rules-grid">
+                        <div class="rules-list-card">
+                            <h3>System Users</h3>
+                            <div class="history-table-wrap">
+                                <table class="history-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Username</th>
+                                            <th>Full Name</th>
+                                            <th>Role</th>
+                                            <th>Status</th>
+                                            <th>Last Login</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="userList">
+                                        <tr class="empty-row"><td colspan="6">Loading users...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="rules-form-card">
+                            <h3>Add New User</h3>
+                            <form id="createUserForm" class="glass-form">
+                                <div class="form-group">
+                                    <label>Username</label>
+                                    <input type="text" id="userUsername" placeholder="e.g. jdoe" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Password</label>
+                                    <input type="password" id="userPassword" placeholder="••••••••" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Full Name</label>
+                                    <input type="text" id="userFullName" placeholder="e.g. John Doe">
+                                </div>
+                                <div class="form-group">
+                                    <label>Email</label>
+                                    <input type="email" id="userEmail" placeholder="e.g. john@gojo.ng">
+                                </div>
+                                <div class="form-group">
+                                    <label>Access Role</label>
+                                    <select id="userRole" required>
+                                        <option value="staff">Staff (Observer)</option>
+                                        <option value="sub_admin">Sub-Admin (Manager)</option>
+                                        <option value="admin">Admin (Full Control)</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-full mt-3">Create User Account</button>
+                                <div class="form-message" id="userMessage"></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="loginModal" class="modal hidden">
+        <div class="modal-backdrop" style="backdrop-filter: blur(8px);"></div>
+        <div class="modal-content glass-panel" id="loginModalContent">
+            <div class="text-center" style="text-align: center; margin-bottom: 1.5rem;">
+                <img src="logo_final.png" alt="Gojo Sentinel" style="width:180px; margin-bottom: 0.5rem;">
+            </div>
+            <h2 class="panel-title" style="justify-content:center;">System Locked</h2>
+            <p style="text-align:center; margin-bottom:1.5rem; color:var(--text-sec); font-size: 0.9rem;">Please authenticate to access the intelligence platform.</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" placeholder="admin" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-full mt-3">Authorize Access</button>
+                <div class="form-message text-center mt-2" id="loginMessage"></div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+
+# Environment variables
+config.env
+.env.local
+
+# Databases
+data/*.db
+data/*.sqlite
+
+# Model checkpoints (optional, but good to keep local models if they change often)
+# models/*.json
+# models/*.pkl
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/

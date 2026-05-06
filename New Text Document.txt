@@ -1,0 +1,8 @@
+I wanted you to update three sections that are not working, the transaction the rules and these things sites are not working.
+
+And also the user sections should be added to allow the admin to login add manage the sub admins and the staffs if available.
+
+And also the name of the model shou be named as HawkEye Sentinel, and add to the UI light and the dark mode
+
+
+How can I add these functions?

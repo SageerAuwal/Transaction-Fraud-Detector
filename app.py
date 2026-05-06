@@ -1,0 +1,602 @@
+from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+import pandas as pd
+import joblib
+import xgboost as xgb
+import uvicorn
+import os
+import json
+import sqlite3
+import hashlib
+import secrets
+from datetime import datetime
+from typing import Optional, List
+from pathlib import Path
+import sqlite3
+
+# Try importing psycopg2 for production PostgreSQL support
+try:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+    POSTGRES_AVAILABLE = True
+except ImportError:
+    POSTGRES_AVAILABLE = False
+
+# ─── App Init ──────────────────────────────────────────────────────────────────
+app = FastAPI(
+    title="Gojo Sentinel — AI Fraud Detection API",
+    description="Real-time AI-powered fraud detection for Nigerian banking transactions (NIP, POS, USSD, Web).",
+    version="3.0.0"
+)
+
+# CORS — allow frontend access
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ─── Database Config ────────────────────────────────────────────────────────────
+DB_PATH = "data/gojo.db"
+RULES_PATH = "data/rules.json"
+DATABASE_URL = os.getenv("DATABASE_URL") # Provided by Render/Heroku
+
+def get_db_conn():
+    """Returns a database connection and a flag indicating if it's PostgreSQL."""
+    if DATABASE_URL and DATABASE_URL.startswith("postgres"):
+        if not POSTGRES_AVAILABLE:
+            raise Exception("PostgreSQL URL provided but psycopg2-binary not installed.")
+        # Fix for Heroku/Render where URL might start with 'postgres://' instead of 'postgresql://'
+        url = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+        conn = psycopg2.connect(url)
+        return conn, True
+    
+    Path("data").mkdir(exist_ok=True)
+    conn = sqlite3.connect(DB_PATH)
+    return conn, False
+
+def execute_query(query: str, params: tuple = ()):
+    """Executes a query and returns the cursor, handling placeholder differences."""
+    conn, is_pg = get_db_conn()
+    if is_pg:
+        query = query.replace("?", "%s")
+    
+    # SQLite doesn't support 'SERIAL' or 'AUTOINCREMENT' in the same way
+    # But since we use 'IF NOT EXISTS', we handle it in init_db
+    
+    cursor = conn.cursor()
+    cursor.execute(query, params)
+    return conn, cursor, is_pg
+
+# ─── Load Models ───────────────────────────────────────────────────────────────
+MODEL_LOADED = False
+preprocessor = None
+model = None
+MODEL_VERSION = {}
+
+try:
+    preprocessor = joblib.load("models/preprocessor.pkl")
+    model = xgb.XGBClassifier()
+    model.load_model("models/xgb_model.json")
+    MODEL_LOADED = True
+    print("[OK] Gojo Sentinel models loaded successfully.")
+    try:
+        with open("models/model_version.json") as f:
+            MODEL_VERSION = json.load(f)
+    except Exception:
+        MODEL_VERSION = {"version": "1.0", "trained_at": "unknown"}
+except Exception as e:
+    print(f"[WARN] Models not found. Train them first. Error: {e}")
+
+# ─── Database Init ──────────────────────────────────────────────────────────────
+def init_db():
+    conn, is_pg = get_db_conn()
+    c = conn.cursor()
+
+    # PK Syntax differences
+    id_pk = "SERIAL PRIMARY KEY" if is_pg else "INTEGER PRIMARY KEY AUTOINCREMENT"
+
+    # Prediction history
+    c.execute(f"""
+        CREATE TABLE IF NOT EXISTS predictions (
+            id {id_pk},
+            transaction_id TEXT,
+            user_id TEXT,
+            amount_ngn REAL,
+            sender_bank TEXT,
+            receiver_bank TEXT,
+            channel TEXT,
+            bvn_match INTEGER,
+            fraud_probability REAL,
+            is_fraud INTEGER,
+            risk_level TEXT,
+            recommendation TEXT,
+            scored_at TEXT
+        )
+    """)
+
+    # Users table
+    c.execute(f"""
+        CREATE TABLE IF NOT EXISTS users (
+            id {id_pk},
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'staff',
+            full_name TEXT,
+            email TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT,
+            last_login TEXT
+        )
+    """)
+
+    # Sessions table
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS sessions (
+            token TEXT PRIMARY KEY,
+            user_id INTEGER,
+            username TEXT,
+            role TEXT,
+            created_at TEXT
+        )
+    """)
+
+    # Seed default admin if no users exist
+    c.execute("SELECT COUNT(*) FROM users")
+    if c.fetchone()[0] == 0:
+        admin_hash = hashlib.sha256("gojo2026".encode()).hexdigest()
+        placeholder = "%s" if is_pg else "?"
+        c.execute(f"""
+            INSERT INTO users (username, password_hash, role, full_name, email, created_at)
+            VALUES ({placeholder}, {placeholder}, 'admin', 'System Administrator', 'admin@gojosentinel.ng', {placeholder})
+        """, ("admin", admin_hash, datetime.utcnow().isoformat()))
+        print("[OK] Default admin created: admin / gojo2026")
+
+    conn.commit()
+    conn.close()
+
+init_db()
+
+# ─── Rules Init ────────────────────────────────────────────────────────────────
+def init_rules():
+    if not os.path.exists(RULES_PATH):
+        default_rules = [
+            {"id": 1, "name": "High Amount Alert", "type": "amount_threshold", "value": 500000, "enabled": True, "action": "REVIEW", "description": "Flag transactions above ₦500,000"},
+            {"id": 2, "name": "Critical Amount Block", "type": "amount_threshold", "value": 2000000, "enabled": True, "action": "BLOCK", "description": "Block transactions above ₦2,000,000"},
+            {"id": 3, "name": "Late Night Window", "type": "time_window", "value": "00:00-04:00", "enabled": True, "action": "REVIEW", "description": "Flag transactions between 12AM – 4AM"},
+            {"id": 4, "name": "BVN Mismatch Block", "type": "bvn_mismatch", "value": 0, "enabled": True, "action": "DECLINE", "description": "Decline if BVN names do not match"},
+            {"id": 5, "name": "USSD High Risk", "type": "channel_risk", "value": "USSD", "enabled": True, "action": "REVIEW", "description": "Flag all high-value USSD transactions"},
+        ]
+        with open(RULES_PATH, "w") as f:
+            json.dump(default_rules, f, indent=2)
+        print("[OK] Default fraud rules created.")
+
+init_rules()
+
+# ─── Auth Helpers ───────────────────────────────────────────────────────────────
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def create_session(user_id: int, username: str, role: str) -> str:
+    token = secrets.token_hex(32)
+    conn, is_pg = get_db_conn()
+    c = conn.cursor()
+    placeholder = "%s" if is_pg else "?"
+    c.execute(f"INSERT INTO sessions (token, user_id, username, role, created_at) VALUES ({placeholder},{placeholder},{placeholder},{placeholder},{placeholder})",
+              (token, user_id, username, role, datetime.utcnow().isoformat()))
+    c.execute(f"UPDATE users SET last_login={placeholder} WHERE id={placeholder}", (datetime.utcnow().isoformat(), user_id))
+    conn.commit()
+    conn.close()
+    return token
+
+def get_session(token: str) -> Optional[dict]:
+    if not token:
+        return None
+    conn, is_pg = get_db_conn()
+    c = conn.cursor()
+    placeholder = "%s" if is_pg else "?"
+    c.execute(f"SELECT user_id, username, role FROM sessions WHERE token={placeholder}", (token,))
+    row = c.fetchone()
+    conn.close()
+    if row:
+        return {"user_id": row[0], "username": row[1], "role": row[2]}
+    return None
+
+def require_auth(authorization: str = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    token = authorization[7:]
+    session = get_session(token)
+    if not session:
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+    return session
+
+def require_admin(session: dict = Depends(require_auth)):
+    if session["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return session
+
+# ─── Nigerian Context Constants ─────────────────────────────────────────────────
+NIGERIAN_BANKS = [
+    "GTBank", "Zenith Bank", "Access Bank", "UBA", "First Bank",
+    "Opay", "Moniepoint", "Kuda", "Fidelity Bank", "Sterling Bank"
+]
+CHANNELS = ["NIP", "POS", "USSD", "Web"]
+
+# ─── Schemas ───────────────────────────────────────────────────────────────────
+class TransactionReq(BaseModel):
+    transaction_id: str
+    user_id: str
+    amount_ngn: float
+    sender_bank: str
+    receiver_bank: str
+    channel: str
+    sender_nuban: str
+    receiver_nuban: str
+    bvn_match: int
+    timestamp: str
+    txn_count_1h: int = 0
+    txn_count_24h: int = 0
+    amt_sum_24h: float = 0.0
+
+class FraudResp(BaseModel):
+    transaction_id: str
+    fraud_probability: float
+    is_fraud: bool
+    risk_level: str
+    recommendation: str
+
+class HealthResp(BaseModel):
+    status: str
+    model_loaded: bool
+    api_version: str
+    model_version: dict
+    supported_banks: list
+    supported_channels: list
+    total_predictions: int
+
+class LoginReq(BaseModel):
+    username: str
+    password: str
+
+class UserCreateReq(BaseModel):
+    username: str
+    password: str
+    role: str = "staff"
+    full_name: str = ""
+    email: str = ""
+
+class UserUpdateReq(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[int] = None
+    password: Optional[str] = None
+
+class RuleCreateReq(BaseModel):
+    name: str
+    type: str
+    value: object
+    enabled: bool = True
+    action: str
+    description: str = ""
+
+# ─── Helpers ───────────────────────────────────────────────────────────────────
+def get_risk_level(prob: float) -> tuple:
+    if prob < 0.25:
+        return "LOW", "APPROVE"
+    elif prob < 0.50:
+        return "MEDIUM", "REVIEW"
+    elif prob < 0.75:
+        return "HIGH", "DECLINE"
+    else:
+        return "CRITICAL", "BLOCK"
+
+def ensure_velocity_features(df: pd.DataFrame) -> pd.DataFrame:
+    for col in ["txn_count_1h", "txn_count_24h", "amt_sum_24h"]:
+        if col not in df.columns:
+            df[col] = 0
+    return df
+
+def log_prediction(txn: TransactionReq, result: FraudResp):
+    try:
+        conn, is_pg = get_db_conn()
+        c = conn.cursor()
+        placeholder = "%s" if is_pg else "?"
+        c.execute(f"""
+            INSERT INTO predictions
+            (transaction_id, user_id, amount_ngn, sender_bank, receiver_bank, channel,
+             bvn_match, fraud_probability, is_fraud, risk_level, recommendation, scored_at)
+            VALUES ({placeholder},{placeholder},{placeholder},{placeholder},{placeholder},{placeholder},{placeholder},{placeholder},{placeholder},{placeholder},{placeholder},{placeholder})
+        """, (txn.transaction_id, txn.user_id, txn.amount_ngn, txn.sender_bank,
+              txn.receiver_bank, txn.channel, txn.bvn_match,
+              result.fraud_probability, int(result.is_fraud),
+              result.risk_level, result.recommendation, datetime.utcnow().isoformat()))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[WARN] Failed to log prediction: {e}")
+
+# ─── Auth Endpoints ─────────────────────────────────────────────────────────────
+@app.post("/api/v1/auth/login")
+async def login(req: LoginReq):
+    conn, is_pg = get_db_conn()
+    c = conn.cursor()
+    placeholder = "%s" if is_pg else "?"
+    c.execute(f"SELECT id, username, role, full_name, is_active FROM users WHERE username={placeholder} AND password_hash={placeholder}",
+              (req.username, hash_password(req.password)))
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    if not row[4]:
+        raise HTTPException(status_code=403, detail="Account is disabled")
+    token = create_session(row[0], row[1], row[2])
+    return {
+        "token": token,
+        "username": row[1],
+        "role": row[2],
+        "full_name": row[3] or row[1],
+        "message": "Login successful"
+    }
+
+@app.post("/api/v1/auth/logout")
+async def logout(session: dict = Depends(require_auth), authorization: str = Header(None)):
+    token = authorization[7:]
+    conn, is_pg = get_db_conn()
+    placeholder = "%s" if is_pg else "?"
+    conn.execute(f"DELETE FROM sessions WHERE token={placeholder}", (token,))
+    conn.commit()
+    conn.close()
+    return {"message": "Logged out successfully"}
+
+@app.get("/api/v1/auth/me")
+async def get_me(session: dict = Depends(require_auth)):
+    conn, is_pg = get_db_conn()
+    c = conn.cursor()
+    placeholder = "%s" if is_pg else "?"
+    c.execute(f"SELECT id, username, role, full_name, email, created_at, last_login FROM users WHERE id={placeholder}", (session["user_id"],))
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "id": row[0], "username": row[1], "role": row[2],
+        "full_name": row[3], "email": row[4],
+        "created_at": row[5], "last_login": row[6]
+    }
+
+# ─── User Management Endpoints ──────────────────────────────────────────────────
+@app.get("/api/v1/users")
+async def list_users(session: dict = Depends(require_admin)):
+    conn, is_pg = get_db_conn()
+    c = conn.cursor()
+    c.execute("SELECT id, username, role, full_name, email, is_active, created_at, last_login FROM users ORDER BY created_at DESC")
+    rows = c.fetchall()
+    conn.close()
+    return [{"id": r[0], "username": r[1], "role": r[2], "full_name": r[3],
+             "email": r[4], "is_active": r[5], "created_at": r[6], "last_login": r[7]}
+            for r in rows]
+
+@app.post("/api/v1/users", status_code=201)
+async def create_user(req: UserCreateReq, session: dict = Depends(require_admin)):
+    if req.role not in ("admin", "sub_admin", "staff"):
+        raise HTTPException(status_code=400, detail="Role must be: admin, sub_admin, or staff")
+    try:
+        conn, is_pg = get_db_conn()
+        c = conn.cursor()
+        placeholder = "%s" if is_pg else "?"
+        c.execute(f"""
+            INSERT INTO users (username, password_hash, role, full_name, email, created_at)
+            VALUES ({placeholder},{placeholder},{placeholder},{placeholder},{placeholder},{placeholder})
+        """, (req.username, hash_password(req.password), req.role,
+              req.full_name, req.email, datetime.utcnow().isoformat()))
+        new_id = c.lastrowid if not is_pg else c.fetchone() # Postgres RETURNING would be better but let's keep it simple
+        # For Postgres, c.lastrowid is usually not reliable without RETURNING
+        if is_pg:
+            # Re-fetch the ID if needed, or just return success
+            new_id = 0 
+        conn.commit()
+        conn.close()
+        return {"id": new_id, "username": req.username, "role": req.role, "message": "User created"}
+    except (sqlite3.IntegrityError, Exception) as e:
+        raise HTTPException(status_code=409, detail=f"User creation failed: {e}")
+
+@app.put("/api/v1/users/{user_id}")
+async def update_user(user_id: int, req: UserUpdateReq, session: dict = Depends(require_admin)):
+    conn, is_pg = get_db_conn()
+    c = conn.cursor()
+    placeholder = "%s" if is_pg else "?"
+    fields, vals = [], []
+    if req.full_name is not None: fields.append("full_name="+placeholder); vals.append(req.full_name)
+    if req.email is not None: fields.append("email="+placeholder); vals.append(req.email)
+    if req.role is not None: fields.append("role="+placeholder); vals.append(req.role)
+    if req.is_active is not None: fields.append("is_active="+placeholder); vals.append(req.is_active)
+    if req.password is not None: fields.append("password_hash="+placeholder); vals.append(hash_password(req.password))
+    if not fields:
+        conn.close()
+        raise HTTPException(status_code=400, detail="No fields to update")
+    vals.append(user_id)
+    c.execute(f"UPDATE users SET {', '.join(fields)} WHERE id={placeholder}", vals)
+    conn.commit()
+    conn.close()
+    return {"message": "User updated"}
+
+@app.delete("/api/v1/users/{user_id}")
+async def delete_user(user_id: int, session: dict = Depends(require_admin)):
+    if user_id == session["user_id"]:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    conn, is_pg = get_db_conn()
+    placeholder = "%s" if is_pg else "?"
+    conn.execute(f"DELETE FROM users WHERE id={placeholder}", (user_id,))
+    conn.commit()
+    conn.close()
+    return {"message": "User deleted"}
+
+# ─── Fraud Rules Endpoints ──────────────────────────────────────────────────────
+@app.get("/api/v1/rules")
+async def get_rules(session: dict = Depends(require_auth)):
+    with open(RULES_PATH) as f:
+        return json.load(f)
+
+@app.post("/api/v1/rules", status_code=201)
+async def create_rule(req: RuleCreateReq, session: dict = Depends(require_admin)):
+    with open(RULES_PATH) as f:
+        rules = json.load(f)
+    new_id = max((r["id"] for r in rules), default=0) + 1
+    new_rule = {"id": new_id, "name": req.name, "type": req.type,
+                "value": req.value, "enabled": req.enabled,
+                "action": req.action, "description": req.description}
+    rules.append(new_rule)
+    with open(RULES_PATH, "w") as f:
+        json.dump(rules, f, indent=2)
+    return new_rule
+
+@app.put("/api/v1/rules/{rule_id}")
+async def update_rule(rule_id: int, req: RuleCreateReq, session: dict = Depends(require_admin)):
+    with open(RULES_PATH) as f:
+        rules = json.load(f)
+    for i, r in enumerate(rules):
+        if r["id"] == rule_id:
+            rules[i] = {"id": rule_id, "name": req.name, "type": req.type,
+                        "value": req.value, "enabled": req.enabled,
+                        "action": req.action, "description": req.description}
+            with open(RULES_PATH, "w") as f:
+                json.dump(rules, f, indent=2)
+            return rules[i]
+    raise HTTPException(status_code=404, detail="Rule not found")
+
+@app.delete("/api/v1/rules/{rule_id}")
+async def delete_rule(rule_id: int, session: dict = Depends(require_admin)):
+    with open(RULES_PATH) as f:
+        rules = json.load(f)
+    rules = [r for r in rules if r["id"] != rule_id]
+    with open(RULES_PATH, "w") as f:
+        json.dump(rules, f, indent=2)
+    return {"message": "Rule deleted"}
+
+# ─── Transactions History Endpoint ──────────────────────────────────────────────
+@app.get("/api/v1/transactions/history")
+async def get_transaction_history(limit: int = 100, session: dict = Depends(require_auth)):
+    conn, is_pg = get_db_conn()
+    c = conn.cursor()
+    placeholder = "%s" if is_pg else "?"
+    c.execute(f"""
+        SELECT id, transaction_id, user_id, amount_ngn, sender_bank, receiver_bank,
+               channel, bvn_match, fraud_probability, is_fraud, risk_level, recommendation, scored_at
+        FROM predictions ORDER BY id DESC LIMIT {placeholder}
+    """, (limit,))
+    rows = c.fetchall()
+    conn.close()
+    keys = ["id","transaction_id","user_id","amount_ngn","sender_bank","receiver_bank",
+            "channel","bvn_match","fraud_probability","is_fraud","risk_level","recommendation","scored_at"]
+    return [dict(zip(keys, r)) for r in rows]
+
+@app.get("/api/v1/transactions/stats")
+async def get_stats(session: dict = Depends(require_auth)):
+    conn, is_pg = get_db_conn()
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM predictions")
+    total = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM predictions WHERE is_fraud=1")
+    fraud_count = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM predictions WHERE risk_level='CRITICAL'")
+    critical = c.fetchone()[0]
+    c.execute("SELECT AVG(fraud_probability) FROM predictions")
+    avg_prob = c.fetchone()[0] or 0
+    conn.close()
+    return {
+        "total_predictions": total,
+        "fraud_detected": fraud_count,
+        "critical_alerts": critical,
+        "avg_fraud_probability": round(avg_prob, 4),
+        "fraud_rate": round(fraud_count / total * 100, 2) if total > 0 else 0
+    }
+
+# ─── Predict Endpoint ───────────────────────────────────────────────────────────
+@app.post("/api/v1/predict", response_model=FraudResp)
+async def predict_fraud(transaction: TransactionReq):
+    if not MODEL_LOADED:
+        raise HTTPException(
+            status_code=503,
+            detail="Model not loaded. Run: python generate_data.py && python train.py"
+        )
+    try:
+        df = pd.DataFrame([{
+            "transaction_id": transaction.transaction_id,
+            "user_id": transaction.user_id,
+            "amount_ngn": transaction.amount_ngn,
+            "sender_bank": transaction.sender_bank,
+            "receiver_bank": transaction.receiver_bank,
+            "channel": transaction.channel,
+            "sender_nuban": transaction.sender_nuban,
+            "receiver_nuban": transaction.receiver_nuban,
+            "bvn_match": transaction.bvn_match,
+            "timestamp": transaction.timestamp,
+            "txn_count_1h": transaction.txn_count_1h,
+            "txn_count_24h": transaction.txn_count_24h,
+            "amt_sum_24h": transaction.amt_sum_24h,
+        }])
+        df = ensure_velocity_features(df)
+        X_processed = preprocessor.transform(df)
+        proba = float(model.predict_proba(X_processed)[0][1])
+        is_fraud = proba >= 0.5
+        risk_level, recommendation = get_risk_level(proba)
+
+        result = FraudResp(
+            transaction_id=transaction.transaction_id,
+            fraud_probability=round(proba, 4),
+            is_fraud=is_fraud,
+            risk_level=risk_level,
+            recommendation=recommendation
+        )
+        log_prediction(transaction, result)
+        return result
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
+
+# ─── Health Endpoint ────────────────────────────────────────────────────────────
+@app.get("/api/v1/health", response_model=HealthResp)
+async def health_check():
+    total = 0
+    try:
+        conn, is_pg = get_db_conn()
+        c = conn.cursor()
+        c.execute("SELECT COUNT(*) FROM predictions")
+        total = c.fetchone()[0]
+        conn.close()
+    except Exception:
+        pass
+    return HealthResp(
+        status="healthy" if MODEL_LOADED else "degraded",
+        model_loaded=MODEL_LOADED,
+        api_version="3.0.0",
+        model_version=MODEL_VERSION,
+        supported_banks=NIGERIAN_BANKS,
+        supported_channels=CHANNELS,
+        total_predictions=total
+    )
+
+@app.get("/")
+async def root():
+    return FileResponse("frontend/index.html")
+
+@app.get("/api/v1/info")
+async def api_info():
+    return {
+        "message": "Gojo Sentinel — AI Fraud Detection API v3.0",
+        "docs": "http://localhost:8000/docs",
+        "health": "http://localhost:8000/api/v1/health"
+    }
+
+# Mount frontend files AFTER API routes to avoid conflicts
+app.mount("/", StaticFiles(directory="frontend"), name="frontend")
+
+if __name__ == "__main__":
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)

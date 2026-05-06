@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "name": "High Amount Alert",
+    "type": "amount_threshold",
+    "value": 500000,
+    "enabled": true,
+    "action": "REVIEW",
+    "description": "Flag transactions above \u20a6500,000"
+  },
+  {
+    "id": 2,
+    "name": "Critical Amount Block",
+    "type": "amount_threshold",
+    "value": 2000000,
+    "enabled": true,
+    "action": "BLOCK",
+    "description": "Block transactions above \u20a62,000,000"
+  },
+  {
+    "id": 3,
+    "name": "Late Night Window",
+    "type": "time_window",
+    "value": "00:00-04:00",
+    "enabled": true,
+    "action": "REVIEW",
+    "description": "Flag transactions between 12AM \u2013 4AM"
+  },
+  {
+    "id": 4,
+    "name": "BVN Mismatch Block",
+    "type": "bvn_mismatch",
+    "value": 0,
+    "enabled": true,
+    "action": "DECLINE",
+    "description": "Decline if BVN names do not match"
+  },
+  {
+    "id": 5,
+    "name": "USSD High Risk",
+    "type": "channel_risk",
+    "value": "USSD",
+    "enabled": true,
+    "action": "REVIEW",
+    "description": "Flag all high-value USSD transactions"
+  }
+]

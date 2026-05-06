@@ -600,20 +600,9 @@ async def health_check():
         total_predictions=total
     )
 
-@app.get("/")
-async def root():
-    return FileResponse("frontend/index.html")
-
-@app.get("/api/v1/info")
-async def api_info():
-    return {
-        "message": "Gojo Sentinel — AI Fraud Detection API v3.0",
-        "docs": "http://localhost:8000/docs",
-        "health": "http://localhost:8000/api/v1/health"
-    }
-
-# Mount frontend files AFTER API routes to avoid conflicts
-app.mount("/", StaticFiles(directory="frontend"), name="frontend")
+# ─── Frontend Serving ───────────────────────────────────────────────────────────
+# Mount frontend files (index.html will be served at / automatically)
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)

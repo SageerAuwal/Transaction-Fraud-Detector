@@ -23,6 +23,9 @@ RUN mkdir -p data && chmod 777 data
 # Expose the port FastAPI runs on
 EXPOSE 7860
 
+# Generate data and train the AI model (Ensures model exists on startup)
+RUN python generate_data.py && python train.py
+
 # Run the application
 # Note: Hugging Face expects the app to run on port 7860
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]

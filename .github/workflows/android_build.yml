@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'zulu'
@@ -25,7 +25,6 @@ jobs:
 
       - name: Build Web Assets
         run: |
-          # The web assets are already in mobile/www, so we just sync
           cd mobile
           npx cap sync
 
@@ -36,7 +35,7 @@ jobs:
           ./gradlew assembleDebug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Gojo-Sentinel-Debug-APK
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk

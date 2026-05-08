@@ -1,0 +1,16 @@
+{
+  "name": "Gojo Sentinel",
+  "short_name": "Gojo",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#10b981",
+  "description": "AI Fraud Detection for Nigerian Transactions",
+  "icons": [
+    {
+      "src": "logo_final.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

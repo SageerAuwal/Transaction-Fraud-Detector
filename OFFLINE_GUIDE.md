@@ -24,5 +24,12 @@ Whenever you want to use the model:
 - **Port Error**: If it says "Port 8000 is in use", close any other apps that might be using it.
 - **Python Error**: If it says "Python not found", ensure Python is installed and added to your system PATH.
 
+## 5. Linux / Ubuntu Instructions
+If you are using Ubuntu or Linux:
+1.  Open the terminal in the project folder.
+2.  Run the setup: **`bash setup_linux.sh`**
+3.  Start the server: **`bash run_linux.sh`**
+4.  Open **`http://localhost:8000`** in your browser.
+
 ---
 *Gojo Sentinel — Nigerian Fintech Security*

@@ -179,26 +179,72 @@ body {
     transition: padding 0.3s var(--ease);
 }
 
-.logo {
+.brand-logo-wrap {
     display: flex;
-    justify-content: center;
     align-items: center;
+    gap: 0.75rem;
     cursor: pointer;
     user-select: none;
     width: 100%;
 }
-.logo-img {
-    height: 140px;
-    width: 140px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 1px solid var(--accent-glow);
-    box-shadow: 0 0 30px var(--accent-glow);
+
+.brand-icon-svg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(139, 92, 246, 0.15));
+    border: 1px solid var(--accent);
+    box-shadow: 0 0 20px var(--accent-glow);
+    flex-shrink: 0;
     transition: transform 0.3s var(--ease);
 }
-.logo-img:hover {
+
+.brand-logo-wrap:hover .brand-icon-svg {
     transform: scale(1.05);
-    box-shadow: 0 0 40px var(--accent-glow);
+    box-shadow: 0 0 25px var(--accent-glow);
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.brand-name {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
+}
+
+.brand-sub {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-top: 2px;
+}
+
+.login-brand-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(139, 92, 246, 0.15));
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 30px var(--accent-glow);
+    margin: 0 auto 1rem auto;
+    transition: transform 0.3s var(--ease);
+}
+
+.login-brand-icon:hover {
+    transform: scale(1.05);
 }
 
 .sidebar-nav {

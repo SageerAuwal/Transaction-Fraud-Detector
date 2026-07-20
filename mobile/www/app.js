@@ -903,9 +903,12 @@ function renderBatchResults(data) {
             listEl.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">No rule violations detected in this batch.</div>';
         } else {
             listEl.innerHTML = data.top_violations.map(v => `
-                <div style="background: var(--bg-input); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft); display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
-                    <span style="color: var(--text-primary); font-weight: 500;">⚠️ ${v.rule}</span>
-                    <span style="background: var(--red-soft); color: var(--red); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700;">${v.count} breaches</span>
+                <div style="background: var(--bg-input); padding: 0.65rem 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--border-soft); display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                    <span style="color: var(--text-primary); font-weight: 500; display:flex; align-items:center; gap:0.4rem;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        ${v.rule}
+                    </span>
+                    <span style="background: var(--red-soft); color: var(--red); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.75rem;">${v.count} breaches</span>
                 </div>
             `).join('');
         }

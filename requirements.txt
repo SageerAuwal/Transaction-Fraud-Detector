@@ -11,3 +11,4 @@ psycopg2-binary
 aiofiles
 imbalanced-learn
 category-encoders
+python-multipart

@@ -11,7 +11,7 @@ def set_cell_background(cell, fill_hex):
     shd = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{fill_hex}"/>')
     tcPr.append(shd)
 
-def set_cell_margins(cell, top=100, bottom=100, left=150, right=150):
+def set_cell_margins(cell, top=120, bottom=120, left=160, right=160):
     tcPr = cell._tc.get_or_add_tcPr()
     tcMar = OxmlElement('w:tcMar')
     for m, val in [('top', top), ('bottom', bottom), ('left', left), ('right', right)]:
@@ -41,6 +41,7 @@ def create_document():
     # Color Palette
     PRIMARY_NAVY = RGBColor(0x0F, 0x17, 0x2A)  # #0f172a
     ACCENT_CYAN  = RGBColor(0x02, 0x84, 0xC7)  # #0284c7
+    PURPLE_ACCENT= RGBColor(0x7C, 0x3A, 0xED)  # #7c3aed
     DARK_TEXT    = RGBColor(0x1E, 0x29, 0x3B)  # #1e293b
     MUTED_GRAY   = RGBColor(0x64, 0x74, 0x8B)  # #64748b
 
@@ -49,13 +50,13 @@ def create_document():
     p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run_title = p_title.add_run("GOJO SENTINEL")
     run_title.font.name = 'Calibri'
-    run_title.font.size = Pt(28)
+    run_title.font.size = Pt(30)
     run_title.font.bold = True
     run_title.font.color.rgb = ACCENT_CYAN
 
     p_sub = doc.add_paragraph()
     p_sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run_sub = p_sub.add_run("Hybrid Transaction Fraud Detection & Regulatory Compliance System for Nigerian Banking")
+    run_sub = p_sub.add_run("Comprehensive System Architecture, Research Design, Implementation & Operational Guide")
     run_sub.font.name = 'Calibri'
     run_sub.font.size = Pt(14)
     run_sub.font.italic = True
@@ -64,12 +65,13 @@ def create_document():
     doc.add_paragraph() # spacing
 
     # Executive Metadata Box Table
-    table_meta = doc.add_table(rows=3, cols=2)
+    table_meta = doc.add_table(rows=4, cols=2)
     table_meta.alignment = WD_TABLE_ALIGNMENT.CENTER
     meta_data = [
-        ("System Name:", "Gojo Sentinel Fraud Detection Platform"),
-        ("Target Region:", "Nigeria Financial Sector (CBN / NIBSS / NIP / USSD Compliance)"),
-        ("Architecture:", "Hybrid Engine: Rules Engine (CBN Policy) + Machine Learning (XGBoost)")
+        ("System Name:", "Gojo Sentinel Transaction Fraud Detector"),
+        ("Target Industry:", "Nigerian Banking Sector (CBN / NIBSS / NIP / USSD Compliance)"),
+        ("Core Architecture:", "Hybrid Dual-Engine: Statutory Rules Engine + XGBoost AI Machine Learning"),
+        ("Supported Platforms:", "Web Desktop Application & Apache Cordova Android Mobile APK")
     ]
     for row_idx, (k, v) in enumerate(meta_data):
         cell_k = table_meta.cell(row_idx, 0)
@@ -129,184 +131,197 @@ def create_document():
         run_t = p.add_run(text)
         run_t.font.color.rgb = DARK_TEXT
 
-    # 1. EXECUTIVE SUMMARY
-    add_heading_1("1. Executive Summary")
+    # 1. PROBLEM STATEMENT OF THE STUDY
+    add_heading_1("1. Problem Statement of the Study")
     add_body_p(
-        "Gojo Sentinel is an enterprise-grade, hybrid artificial intelligence and regulatory compliance transaction screening platform built specifically for the Nigerian financial ecosystem. Financial fraud in Nigeria across electronic payment channels—such as NIBSS Instant Payments (NIP), USSD banking, Mobile Money, and Web portals—poses critical security challenges. Gojo Sentinel addresses these risks by coupling deterministic Central Bank of Nigeria (CBN) regulatory compliance rules with probabilistic Machine Learning (XGBoost) fraud scoring."
+        "The rapid digitization of the Nigerian financial services sector—driven by the Central Bank of Nigeria (CBN) Cashless Policy and NIBSS Instant Payments (NIP)—has led to exponential growth in electronic transaction volumes. However, this expansion has been accompanied by a sophisticated rise in electronic financial fraud, costing Nigerian financial institutions billions of Naira annually."
     )
     add_body_p(
-        "The system processes both single real-time transactions and large bulk datasets (CSV), delivering sub-second risk classification across four distinct verdicts: APPROVE (Low Risk), REVIEW (Medium Risk), DECLINE (High Risk), and BLOCK (Critical Policy Breach)."
+        "Traditional fraud detection mechanisms in Nigerian banks rely primarily on static rule-based systems. While effective at enforcing hard statutory limits (such as daily transfer caps), static rules fail to adapt to complex, evolving fraud tactics like SIM-swap scams, credential harvesting, velocity attacks, and midnight account draining. Conversely, pure machine learning approaches often operate as 'black boxes' that ignore statutory Central Bank of Nigeria (CBN) regulatory thresholds, leading to compliance risk and non-compliance fines."
     )
-
-    # 2. SYSTEM ARCHITECTURE & ENGINE DESIGN
-    add_heading_1("2. System Architecture & Design")
     add_body_p(
-        "The system operates on a dual-engine architecture designed to ensure zero tolerance for statutory regulatory breaches while maintaining ultra-low false-positive rates using machine learning."
+        "Therefore, there is a critical need for a unified, hybrid fraud prevention system tailored to the Nigerian financial context that simultaneously guarantees 100% regulatory compliance while dynamically detecting complex fraud patterns with machine learning."
     )
 
-    table_arch = doc.add_table(rows=5, cols=3)
-    table_arch.alignment = WD_TABLE_ALIGNMENT.CENTER
-    headers = ["Layer / Module", "Technology / Stack", "Functional Purpose"]
-    for i, h_text in enumerate(headers):
-        cell = table_arch.cell(0, i)
+    # 2. AIM AND OBJECTIVES OF THE STUDY
+    add_heading_1("2. Aim & Objectives of the Study")
+    add_body_p(
+        "The primary aim of this project is to design, develop, and deploy 'Gojo Sentinel'—a hybrid transaction fraud detection and regulatory compliance platform specifically engineered for Nigerian banking channels."
+    )
+    add_body_p("To achieve this aim, the study pursued five specific objectives:")
+    add_bullet("Objective 1 — Enforce Regulatory Compliance", "Implement a deterministic Nigerian Banking Compliance Engine enforcing CBN operational caps (USSD ₦100,000 daily limit, NIP ₦5,000,000 single transfer cap, midnight velocity checks, and restricted bank watchlists).")
+    add_bullet("Objective 2 — Train Machine Learning Model", "Develop and train an XGBoost (Extreme Gradient Boosting) classifier to evaluate non-linear feature interactions and compute probabilistic fraud risk scores.")
+    add_bullet("Objective 3 — Dual-Mode Screening Pipeline", "Build a unified pipeline supporting both real-time single transaction scoring and high-volume CSV dataset batch screening with live audit terminal logs.")
+    add_bullet("Objective 4 — Modern Multi-Device Interface", "Design a responsive frontend UI featuring a Gemini-style Collapsible Rail Sidebar, 30-Day Activity Trend Analytics, and an Apache Cordova Android mobile APK package.")
+    add_bullet("Objective 5 — Enterprise Security & Access Control", "Implement role-based security using JWT authentication, admin rule management, and analyst monitoring privileges.")
+
+    # 3. WHAT THE SYSTEM DOES
+    add_heading_1("3. What the System Does")
+    add_body_p(
+        "Gojo Sentinel acts as an intelligent intermediary between transaction channels and financial ledger backends. It screens every transaction against statutory rules and machine learning models to generate sub-second risk verdicts."
+    )
+
+    table_verdicts = doc.add_table(rows=5, cols=4)
+    table_verdicts.alignment = WD_TABLE_ALIGNMENT.CENTER
+    v_headers = ["Risk Level", "Probability Range", "Verdict", "Operational System Behavior"]
+    for i, h_text in enumerate(v_headers):
+        cell = table_verdicts.cell(0, i)
         set_cell_background(cell, "0F172A")
         p = cell.paragraphs[0]
         r = p.add_run(h_text)
         r.bold = True
         r.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
 
-    arch_rows = [
-        ("Backend REST API", "FastAPI / Python 3.10+", "High-throughput asynchronous API serving real-time prediction and dataset batch processing."),
-        ("Compliance Engine", "Deterministic Rule Set (CBN)", "Instant verification against USSD caps, NIP single transfer limits, velocity thresholds, and restricted bank lists."),
-        ("AI Machine Learning Engine", "XGBoost Classifier", "Probabilistic feature evaluation calculating exact fraud likelihood percentages based on historical transaction dynamics."),
-        ("User Interface (Web & Mobile)", "HTML5, Vanilla CSS, JS, Cordova", "Responsive single-page web app & Cordova mobile APK featuring Gemini-style Collapsible Rail Sidebar, Live Terminal Logs, and Trend Analytics.")
+    v_data = [
+        ("LOW RISK", "0.0% - 29.9%", "APPROVE", "Transaction is processed instantly without user friction."),
+        ("MEDIUM RISK", "30.0% - 59.9%", "REVIEW", "Held for step-up multi-factor authentication (2FA / OTP check)."),
+        ("HIGH RISK", "60.0% - 84.9%", "DECLINE", "Transaction declined; suspicious activity alert logged."),
+        ("CRITICAL RISK", "85.0% - 100.0%", "BLOCK", "Transaction blocked immediately due to rule violation or critical fraud score.")
     ]
-    for row_idx, data in enumerate(arch_rows, start=1):
-        for col_idx, text in enumerate(data):
-            cell = table_arch.cell(row_idx, col_idx)
-            set_cell_background(cell, "F8FAFC" if row_idx % 2 == 1 else "FFFFFF")
-            p = cell.paragraphs[0]
-            p.add_run(text)
-
-    doc.add_paragraph()
-
-    # 3. NIGERIAN BANKING REGULATORY COMPLIANCE MODULE
-    add_heading_1("3. Nigerian Banking Regulatory Compliance Module")
-    add_body_p(
-        "Gojo Sentinel embeds native compliance logic aligned with Central Bank of Nigeria (CBN) operational guidelines for electronic payment channels:"
-    )
-    add_bullet("USSD Transfer Thresholds", "Transactions initiated via USSD channel (*901#, *737#, *894#, etc.) exceeding ₦100,000 NGN daily limit are automatically flagged as CRITICAL / BLOCK violations.")
-    add_bullet("NIP Single Transfer Limit", "Single transfers over NIBSS Instant Payment (NIP) exceeding ₦5,000,000 NGN are flagged for mandatory compliance review.")
-    add_bullet("Midnight Velocity Spikes", "High-value transfers occurring between 11:00 PM and 04:30 AM are subjected to elevated risk scoring due to historical fraud correlation during non-operating hours.")
-    add_bullet("Restricted Bank List", "Automatic flagging of transactions routed to or from high-risk accounts or institutions with active regulatory flags.")
-
-    # 4. MACHINE LEARNING & RISK VERDICT MATRIX
-    add_heading_1("4. Machine Learning & Risk Verdict Matrix")
-    add_body_p(
-        "The XGBoost model processes multi-dimensional transaction features to output a normalized Fraud Probability Score (0.0% to 100.0%). This score is combined with the rules engine output into a final Risk Verdict Matrix:"
-    )
-
-    table_risk = doc.add_table(rows=5, cols=4)
-    table_risk.alignment = WD_TABLE_ALIGNMENT.CENTER
-    risk_headers = ["Risk Level", "Probability Score", "Action / Verdict", "System Behavior"]
-    for i, h_text in enumerate(risk_headers):
-        cell = table_risk.cell(0, i)
-        set_cell_background(cell, "0284C7")
-        p = cell.paragraphs[0]
-        r = p.add_run(h_text)
-        r.bold = True
-        r.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
-
-    risk_data = [
-        ("LOW RISK", "0.0% - 29.9%", "APPROVE", "Transaction cleared automatically without friction."),
-        ("MEDIUM RISK", "30.0% - 59.9%", "REVIEW", "Transaction held for secondary verification or 2FA OTP prompt."),
-        ("HIGH RISK", "60.0% - 84.9%", "DECLINE", "Transaction declined due to elevated fraud indicators."),
-        ("CRITICAL RISK", "85.0% - 100.0%", "BLOCK", "Transaction blocked immediately; compliance audit alert generated.")
-    ]
-    for row_idx, data in enumerate(risk_data, start=1):
+    for row_idx, data in enumerate(v_data, start=1):
         bg = "F0FDF4" if row_idx == 1 else "FEFCE8" if row_idx == 2 else "FFF7ED" if row_idx == 3 else "FEF2F2"
         for col_idx, text in enumerate(data):
-            cell = table_risk.cell(row_idx, col_idx)
+            cell = table_verdicts.cell(row_idx, col_idx)
             set_cell_background(cell, bg)
             p = cell.paragraphs[0]
             p.add_run(text)
 
     doc.add_paragraph()
 
-    # 5. DATASET BATCH SCANNING & DATA FLOW PIPELINE
-    add_heading_1("5. Dataset Batch Screening & Data Flow Pipeline")
+    # 4. FRONTEND ARCHITECTURE & TOOLS USED
+    add_heading_1("4. Frontend Architecture & Technology Stack")
     add_body_p(
-        "For bulk dataset processing, Gojo Sentinel implements an interactive 4-stage data pipeline with real-time visual progress tracking:"
+        "The frontend is engineered as an ultra-fast, responsive Single Page Application (SPA) built with vanilla core web technologies for maximum performance and cross-platform compatibility."
     )
-    add_bullet("Stage 1 — CSV Ingestion", "Uploads and parses raw transaction records, validating schema and data types.")
-    add_bullet("Stage 2 — Banking Rules Verification", "Executes bulk evaluation against CBN policy thresholds and flags violations.")
-    add_bullet("Stage 3 — AI Fraud Model Scoring", "Passes feature vectors through the XGBoost engine to calculate individual risk scores.")
-    add_bullet("Stage 4 — Risk Verdict & Audit Generation", "Generates summary statistics, interactive doughnut charts, and a filterable audited table exportable as CSV.")
 
-    # 6. FRONTEND USER EXPERIENCE & DESIGN SYSTEM
-    add_heading_1("6. Frontend Interface & User Experience Design")
+    add_bullet("Core Technologies", "HTML5 for semantic layout, Vanilla CSS3 with custom HSL tokenized design system (dark mode, glassmorphism), and Vanilla JavaScript (ES6+ async/await, Fetch API).")
+    add_bullet("Gemini-Style Collapsible Rail Sidebar", "Supports Expanded Mode (260px with logo branding and labels) and Collapsible Rail Mode (72px compact icon bar with centered SVGs and tooltips).")
+    add_bullet("Real-Time Terminal Console & Progress Bar", "Includes an animated 0-100% progress bar alongside a dark green live terminal logger outputting timestamped execution events during dataset batch processing.")
+    add_bullet("30-Day Activity Trend & Doughnut Analytics", "Integrated Chart.js library rendering real-time line charts for legitimate vs. fraudulent volume trends and interactive risk doughnut breakdown charts.")
+    add_bullet("Vector SVG Graphic System", "100% vector SVG icons across all navigation, step visualizer cards, and violation badges for crisp display across mobile and desktop displays.")
+
+    # 5. BACKEND ARCHITECTURE & TOOLS USED
+    add_heading_1("5. Backend Architecture & Technology Stack")
     add_body_p(
-        "The user interface incorporates modern web design standards tailored for high-density financial monitoring:"
+        "The backend is powered by a high-performance Python microservice architecture built on FastAPI and Uvicorn:"
     )
-    add_bullet("Gemini-Style Collapsible Rail Sidebar", "Supports both Expanded Mode (260px with branding & text labels) and Collapsible Rail Mode (72px compact icon bar with centered SVGs and tooltips).")
-    add_bullet("Real-Time Execution Console & Progress Bar", "Includes a dark green terminal logger streaming live timestamped pipeline logs alongside a smooth 0-100% progress bar.")
-    add_bullet("30-Day Activity Trend Chart", "Permanently displayed on the main dashboard, dynamically updating legitimate vs. fraudulent volume trends in real time.")
-    add_bullet("Vector SVG Design System", "All UI components use scalable SVG vector graphics instead of raster graphics or emojis for a professional, crisp financial software aesthetic.")
 
-    # 7. MULTI-PLATFORM DEPLOYMENT & SECURITY
-    add_heading_1("7. Multi-Platform Deployment & Security Framework")
-    add_bullet("Cloud Hosting", "Backend and Web Frontend hosted on Hugging Face Spaces with Docker containerization.")
-    add_bullet("Mobile Android APK", "Packaged using Apache Cordova, providing native mobile functionality across Android devices.")
-    add_bullet("Authentication & Security", "JWT (JSON Web Token) authentication with role-based access control (Admin / Analyst roles).")
+    add_bullet("FastAPI & Uvicorn", "Asynchronous Python web framework delivering high concurrency and automatic OpenAPI / Swagger documentation.")
+    add_bullet("XGBoost Classifier (`xgboost`)", "Extreme Gradient Boosting algorithm trained on high-dimensional transaction features to compute exact probability scores.")
+    add_bullet("Data Processing (`pandas`, `numpy`, `scikit-learn`)", "Data manipulation and feature preprocessing pipeline for real-time payloads and bulk CSV files.")
+    add_bullet("Authentication & Security (`PyJWT`, `passlib`)", "JSON Web Token (JWT) stateless authentication and bcrypt password hashing for admin security.")
+    add_bullet("CORS Middleware", "Configured cross-origin resource sharing allowing secure API requests from web browsers and mobile apps.")
+
+    # 6. STEP-BY-STEP OPERATIONAL GUIDE
+    add_heading_1("6. Detailed Operational & User Guide")
+    add_body_p("Follow this step-by-step operational guide to run and use Gojo Sentinel:")
+
+    add_heading_2("6.1 How to Start the System Locally")
+    add_bullet("Windows Execution", "Double-click `run_offline.bat` in the project root directory. It automatically starts the Uvicorn FastAPI backend on port 8000 and opens the web app in your browser.")
+    add_bullet("Linux / macOS Execution", "Open terminal and execute `./run_linux.sh`.")
+
+    add_heading_2("6.2 Scoring Single Transactions (Simulator)")
+    add_bullet("Step 1", "Navigate to the 'Dashboard' section in the sidebar.")
+    add_bullet("Step 2", "Select a channel (NIP, USSD, POS, Mobile, Web).")
+    add_bullet("Step 3", "Click 'Normal Pattern' to fill safe parameters, or 'High-Risk Pattern' to simulate an attack (e.g. USSD ₦250,000 at 02:15 AM).")
+    add_bullet("Step 4", "Click 'Score Transaction' to view immediate AI Risk %, Decision Badge, and Compliance Violation tags.")
+
+    add_heading_2("6.3 Bulk Dataset Batch Screening")
+    add_bullet("Step 1", "Click 'Batch Scanner' in the sidebar.")
+    add_bullet("Step 2", "Drag & drop a transaction dataset CSV file (or click 'Select CSV File').")
+    add_bullet("Step 3", "Observe the live 4-Step Visualizer Boxes light up in glowing cyan, gold, purple, and green as the Live Terminal Console logs processing timestamps.")
+    add_bullet("Step 4", "Review the 4 Stat Cards, Risk Doughnut Chart, Top Rule Breaches, and Filterable Audited Table.")
+    add_bullet("Step 5", "Click 'Export Audited CSV' to download the completed audit report.")
+
+    add_heading_2("6.4 Managing Rules & Users (Admin)")
+    add_bullet("Step 1", "Click 'Admin Access' on the sidebar user card and log in with admin credentials (`admin` / `admin123`).")
+    add_bullet("Step 2", "Navigate to 'Rules' to add new USSD/NIP thresholds or delete rules.")
+    add_bullet("Step 3", "Navigate to 'Users' to register new analyst accounts.")
+
+    add_heading_2("6.5 Mobile Android APK")
+    add_bullet("Execution", "Open `mobile/platforms/android/app/build/outputs/apk/debug/app-debug.apk` to install directly on Android mobile devices.")
 
     # Save document
-    filename_docx = "Gojo_Sentinel_System_Presentation_Document.docx"
+    filename_docx = "Gojo_Sentinel_Complete_System_Presentation.docx"
     doc.save(filename_docx)
     print(f"[SUCCESS] Microsoft Word document created successfully: {filename_docx}")
 
-    # Also generate Markdown version
+    # Also generate comprehensive Markdown version
     md_content = f"""# 🛡️ GOJO SENTINEL
-## Hybrid Transaction Fraud Detection & Regulatory Compliance System for Nigerian Banking
+## Comprehensive System Architecture, Research Design, Implementation & Operational Guide
 
 ---
 
-### **Executive Summary**
-Gojo Sentinel is an enterprise-grade, hybrid artificial intelligence and regulatory compliance transaction screening platform built specifically for the Nigerian financial ecosystem. Financial fraud in Nigeria across electronic payment channels—such as NIBSS Instant Payments (NIP), USSD banking, Mobile Money, and Web portals—poses critical security challenges. Gojo Sentinel addresses these risks by coupling deterministic Central Bank of Nigeria (CBN) regulatory compliance rules with probabilistic Machine Learning (XGBoost) fraud scoring.
+### **1. Problem Statement of the Study**
+The rapid digitization of the Nigerian financial services sector—driven by the Central Bank of Nigeria (CBN) Cashless Policy and NIBSS Instant Payments (NIP)—has led to exponential growth in electronic transaction volumes. However, this expansion has been accompanied by a sophisticated rise in electronic financial fraud, costing Nigerian financial institutions billions of Naira annually.
 
-The system processes both single real-time transactions and large bulk datasets (CSV), delivering sub-second risk classification across four distinct verdicts: **APPROVE (Low Risk)**, **REVIEW (Medium Risk)**, **DECLINE (High Risk)**, and **BLOCK (Critical Policy Breach)**.
+Traditional fraud detection mechanisms in Nigerian banks rely primarily on static rule-based systems. While effective at enforcing hard statutory limits (such as daily transfer caps), static rules fail to adapt to complex, evolving fraud tactics like SIM-swap scams, credential harvesting, velocity attacks, and midnight account draining. Conversely, pure machine learning approaches often operate as "black boxes" that ignore statutory Central Bank of Nigeria (CBN) regulatory thresholds, leading to compliance risk and non-compliance fines.
 
----
-
-### **1. System Architecture & Design**
-The system operates on a dual-engine architecture designed to ensure zero tolerance for statutory regulatory breaches while maintaining ultra-low false-positive rates using machine learning:
-
-| Layer / Module | Technology Stack | Functional Purpose |
-| :--- | :--- | :--- |
-| **Backend REST API** | FastAPI / Python 3.10+ | High-throughput asynchronous API serving real-time prediction and dataset batch processing. |
-| **Compliance Engine** | Deterministic Rule Set (CBN) | Instant verification against USSD caps, NIP single transfer limits, velocity thresholds, and restricted bank lists. |
-| **AI Machine Learning Engine** | XGBoost Classifier | Probabilistic feature evaluation calculating exact fraud likelihood percentages based on historical transaction dynamics. |
-| **User Interface (Web & Mobile)** | HTML5, Vanilla CSS, JS, Cordova | Responsive single-page web app & Cordova mobile APK featuring Gemini-style Collapsible Rail Sidebar, Live Terminal Logs, and Trend Analytics. |
+Therefore, there is a critical need for a unified, hybrid fraud prevention system tailored to the Nigerian financial context that simultaneously guarantees 100% regulatory compliance while dynamically detecting complex fraud patterns with machine learning.
 
 ---
 
-### **2. Central Bank of Nigeria (CBN) Compliance Module**
-- **USSD Transfer Caps**: Transactions initiated via USSD channel (`*901#`, `*737#`, `*894#`, etc.) exceeding **₦100,000 NGN** daily limit are automatically flagged as `CRITICAL` / `BLOCK` violations.
-- **NIP Single Transfer Limit**: Single transfers over NIBSS Instant Payment (NIP) exceeding **₦5,000,000 NGN** are flagged for mandatory compliance review.
-- **Midnight Velocity Spikes**: High-value transfers occurring between 11:00 PM and 04:30 AM are subjected to elevated risk scoring due to historical fraud correlation during non-operating hours.
-- **Restricted Bank List**: Automatic flagging of transactions routed to or from high-risk accounts or institutions with active regulatory flags.
+### **2. Aim & Objectives of the Study**
+The primary aim of this project is to design, develop, and deploy **Gojo Sentinel**—a hybrid transaction fraud detection and regulatory compliance platform specifically engineered for Nigerian banking channels.
+
+- **Objective 1 — Enforce Regulatory Compliance**: Implement a deterministic Nigerian Banking Compliance Engine enforcing CBN operational caps (USSD ₦100,000 daily limit, NIP ₦5,000,000 single transfer cap, midnight velocity checks, and restricted bank watchlists).
+- **Objective 2 — Train Machine Learning Model**: Develop and train an XGBoost (Extreme Gradient Boosting) classifier to evaluate non-linear feature interactions and compute probabilistic fraud risk scores.
+- **Objective 3 — Dual-Mode Screening Pipeline**: Build a unified pipeline supporting both real-time single transaction scoring and high-volume CSV dataset batch screening with live audit terminal logs.
+- **Objective 4 — Modern Multi-Device Interface**: Design a responsive frontend UI featuring a Gemini-style Collapsible Rail Sidebar, 30-Day Activity Trend Analytics, and an Apache Cordova Android mobile APK package.
+- **Objective 5 — Enterprise Security & Access Control**: Implement role-based security using JWT authentication, admin rule management, and analyst monitoring privileges.
 
 ---
 
-### **3. Risk Verdict Matrix**
-| Risk Level | Probability Score | Action / Verdict | System Behavior |
+### **3. What the System Does (Risk Verdict Matrix)**
+
+| Risk Level | Fraud Probability Range | Action Verdict | Operational System Behavior |
 | :--- | :--- | :--- | :--- |
-| **LOW RISK** | 0.0% - 29.9% | **APPROVE** | Transaction cleared automatically without friction. |
-| **MEDIUM RISK** | 30.0% - 59.9% | **REVIEW** | Transaction held for secondary verification or 2FA OTP prompt. |
-| **HIGH RISK** | 60.0% - 84.9% | **DECLINE** | Transaction declined due to elevated fraud indicators. |
-| **CRITICAL RISK** | 85.0% - 100.0% | **BLOCK** | Transaction blocked immediately; compliance audit alert generated. |
+| **LOW RISK** | 0.0% - 29.9% | **`APPROVE`** | Transaction is processed instantly without user friction. |
+| **MEDIUM RISK** | 30.0% - 59.9% | **`REVIEW`** | Held for step-up multi-factor authentication (2FA / OTP check). |
+| **HIGH RISK** | 60.0% - 84.9% | **`DECLINE`** | Transaction declined; suspicious activity alert logged. |
+| **CRITICAL RISK** | 85.0% - 100.0% | **`BLOCK`** | Transaction blocked immediately due to rule violation or critical fraud score. |
 
 ---
 
-### **4. Dataset Batch Screening & Data Flow Pipeline**
-1. **Stage 1 — CSV Ingestion**: Uploads and parses raw transaction records, validating schema and data types.
-2. **Stage 2 — Banking Rules Verification**: Executed bulk evaluation against CBN policy thresholds and flags violations.
-3. **Stage 3 — AI Fraud Model Scoring**: Passes feature vectors through the XGBoost engine to calculate individual risk scores.
-4. **Stage 4 — Risk Verdict & Audit Generation**: Generates summary statistics, interactive doughnut charts, and a filterable audited table exportable as CSV.
+### **4. Frontend Architecture & Technology Stack**
+- **Core Web Stack**: HTML5, Vanilla CSS3 (HSL dark mode design system, glassmorphism), Vanilla JavaScript (ES6+ async/await, Fetch API).
+- **Gemini-Style Collapsible Rail Sidebar**: Supports Expanded Mode (260px with branding & text labels) and Collapsible Rail Mode (72px compact icon bar with centered SVGs and tooltips).
+- **Real-Time Terminal Console & Progress Bar**: Animated 0-100% progress bar alongside a dark green live terminal logger outputting timestamped execution events during dataset batch processing.
+- **Analytics & Visualizations**: Chart.js rendering 30-Day Activity Trends and interactive Risk Distribution Doughnut charts.
+- **Vector SVG System**: 100% scalable SVG vector graphics across all icons, cards, and badges.
 
 ---
 
-### **5. Frontend Interface & User Experience**
-- **Gemini-Style Collapsible Rail Sidebar**: Supports both Expanded Mode (260px with branding & text labels) and Collapsible Rail Mode (72px compact icon bar with centered SVGs and tooltips).
-- **Real-Time Execution Console & Progress Bar**: Includes a dark green terminal logger streaming live timestamped pipeline logs alongside a smooth 0-100% progress bar.
-- **30-Day Activity Trend Chart**: Permanently displayed on the main dashboard, dynamically updating legitimate vs. fraudulent volume trends in real time.
-- **Vector SVG Design System**: All UI components use scalable SVG vector graphics instead of raster graphics or emojis for a professional, crisp financial software aesthetic.
+### **5. Backend Architecture & Technology Stack**
+- **FastAPI & Uvicorn**: Asynchronous Python web framework delivering high concurrency.
+- **XGBoost Classifier (`xgboost`)**: Extreme Gradient Boosting algorithm computing exact probability scores.
+- **Data Preprocessing (`pandas`, `numpy`, `scikit-learn`)**: Data pipeline for real-time and bulk CSV records.
+- **Security (`PyJWT`, `passlib`)**: JWT stateless authentication and bcrypt password hashing.
 
 ---
 
-### **6. Multi-Platform Deployment & Security**
-- **Cloud Hosting**: Backend and Web Frontend hosted on Hugging Face Spaces with Docker containerization.
-- **Mobile Android APK**: Packaged using Apache Cordova, providing native mobile functionality across Android devices.
-- **Authentication & Security**: JWT (JSON Web Token) authentication with role-based access control (Admin / Analyst roles).
+### **6. Detailed Step-by-Step User Guide**
+
+#### **6.1 How to Start the System Locally**
+- **Windows**: Double-click `run_offline.bat` in the project folder.
+- **Linux / macOS**: Execute `./run_linux.sh` in terminal.
+
+#### **6.2 Scoring Single Transactions**
+1. Open the **Dashboard** tab.
+2. Select a channel (NIP, USSD, POS, Mobile, Web).
+3. Click **Normal Pattern** or **High-Risk Pattern** to fill sample data.
+4. Click **Score Transaction** to view immediate Risk %, Decision Badge, and Compliance Violation tags.
+
+#### **6.3 Bulk Dataset Batch Screening**
+1. Open the **Batch Scanner** tab.
+2. Drag & drop a dataset CSV file.
+3. Observe the 4-Step Visualizer Boxes glow in real-time as the Live Terminal Console streams execution timestamps.
+4. View the 4 Summary Stat Cards, Doughnut Chart, Top Rule Breaches, and Filterable Table.
+5. Click **Export Audited CSV** to download the completed audit report.
+
+#### **6.4 Admin Management**
+1. Click **Admin Access** on the user card and log in (`admin` / `admin123`).
+2. Manage rules under **Rules** tab or add users under **Users** tab.
 """
 
     with open("GOJO_SENTINEL_SYSTEM_DOCUMENTATION.md", "w", encoding="utf-8") as f:
